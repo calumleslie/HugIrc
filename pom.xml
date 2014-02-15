@@ -48,6 +48,36 @@
       <version>2.0.M6-SNAP8</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+    	<groupId>com.netflix.rxjava</groupId>
+    	<artifactId>rxjava-core</artifactId>
+    	<version>0.15.1</version>
+    </dependency>
+    <dependency>
+    	<groupId>com.netflix.rxjava</groupId>
+    	<artifactId>rxjava-scala</artifactId>
+    	<version>0.15.1</version>
+    </dependency>
+    <dependency>
+    	<groupId>io.netty</groupId>
+    	<artifactId>netty-all</artifactId>
+    	<version>4.0.13.Final</version>
+    </dependency>
+    <dependency>
+    	<groupId>com.typesafe</groupId>
+    	<artifactId>scalalogging-slf4j_2.10</artifactId>
+    	<version>1.0.1</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.slf4j</groupId>
+    	<artifactId>slf4j-simple</artifactId>
+    	<version>1.7.5</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.slf4j</groupId>
+    	<artifactId>slf4j-api</artifactId>
+    	<version>1.7.5</version>
+    </dependency>
   </dependencies>
 
   <build>

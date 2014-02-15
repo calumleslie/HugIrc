@@ -22,7 +22,7 @@ class Parser {
     
     def trailing = " :" ~ """.*""".r ^^ { case _ ~ content => content }
     
-    def param = " " ~ """[^:][^ :]*""".r ^^ { case _ ~ param => param }
+    def param = " " ~ """[^:][^ ]*""".r ^^ { case _ ~ param => param }
     
     // Not as strict as spec (sensible?)
     def prefix = ":" ~ """[^: ]+""".r ~ " " ^^ { case _ ~ prefix ~ _ => prefix }
