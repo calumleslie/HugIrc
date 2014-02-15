@@ -11,25 +11,16 @@ import scala.concurrent.duration._
 object HorrorTest extends App with Logging {
   val bot = new Bot()
 
-  val what = for { MessageReceived(connectionId, message) <- bot } yield (connectionId, message)
+  echo(bot.messages).subscribe(bot)
+  pong(bot.messages).subscribe(bot)
 
-  val echo = Reactor[(ConnectionId, Message), Command] { (message: (ConnectionId, Message), subject: Observer[Command]) =>
-    message match {
-      case (cid, PRIVMSG(_, to :: message :: _)) => subject.onNext(SendMessage(cid, PRIVMSG(to, message)))
-      case _ => ()
-    }
-  }
+  bot.maintainConnectionTo("localhost", 6667, Identity("hugbot"))
 
-  bot.messages.subscribe(echo)
-  echo.subscribe(bot)
-  
-  val ponger = Reactor[(ConnectionId, Message), Command] { (message: (ConnectionId, Message), subject: Observer[Command]) =>
-    message match {
-      case (cid, PING(_, args)) => subject.onNext(SendMessage(cid, PONG(args: _*)))
-      case _ => ()
-    }
-  }
+  def echo(messages: Observable[(ConnectionId, Message)]) = for {
+    (cid, PRIVMSG(_, to :: message :: _)) <- messages
+  } yield SendMessage(cid, PRIVMSG(to, message))
 
-  bot.messages.subscribe(ponger)
-  ponger.subscribe(bot)
+  def pong(messages: Observable[(ConnectionId, Message)]) = for {
+    (cid, PING(_, args)) <- messages
+  } yield SendMessage(cid, PONG(args: _*))
 }
