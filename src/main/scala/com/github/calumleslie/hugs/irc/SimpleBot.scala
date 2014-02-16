@@ -50,8 +50,6 @@ class SimpleBot extends Observer[Command] with Observable[Event] with Logging {
 
   override val asJavaObservable = eventSubject.asJavaObservable
 
-  val messages = for { MessageReceived(connectionId, message) <- this } yield (connectionId, message)
-
   override def onNext(command: Command) = command match {
     case Connect(id) => {
       val channelFuture = bootstrap.connect(id.host, id.port)
@@ -110,7 +108,6 @@ class SimpleBot extends Observer[Command] with Observable[Event] with Logging {
         case Connected(`id`) => {
           onNext(SendMessage(id, NICK(identity.nick)))
           onNext(SendMessage(id, USER(identity.username, identity.realname)))
-          onNext(SendMessage(id, JOIN("#hello")))
         }
         case Disconnected(`id`) => {
           onNext(Connect(id))
@@ -122,3 +119,4 @@ class SimpleBot extends Observer[Command] with Observable[Event] with Logging {
     id
   }
 }
+

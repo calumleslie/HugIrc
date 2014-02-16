@@ -16,39 +16,23 @@ import com.github.calumleslie.hugs.irc.context.ReplyableContext
 import scala.util.Random
 import rx.lang.scala.schedulers.IOScheduler
 import rx.lang.scala.Subject
+import com.github.calumleslie.hugs.irc.context.InChannel
+import com.github.calumleslie.hugs.irc.messages.JOIN
 
 object HorrorTest extends App with Logging {
-  val bot = new SimpleBot()
+  val bot = Bot.connect("localhost", 6667, Identity("hugbot"))
+  bot.stayJoinedTo("#hello")
 
-  val pongMessages = pong(bot.messages)
-  pongMessages.subscribe(bot)
-  pongMessages.subscribe(println(_))
-
-  val contextTracker = new ContextTracker()
-  val contextEvents = contextTracker.track(bot)
-
-  val trackedRaw = for {
-    (MessageReceived(_, message), context) <- contextEvents
-  } yield (context, message)
-
-  val trackedMessages = trackedRaw.observeOn(IOScheduler())
-
-  tellMeTopic(trackedMessages).subscribe(bot)
-  echo(trackedMessages, "(yay!)").subscribe(bot)
-
-  val id = bot.maintainConnectionTo("localhost", 6667, Identity("hugbot"))
-
-  def echo(messages: Observable[(Context, Message)], suffix: String) = for {
-    (ReplyableContext(ctx), PRIVMSG(_, _ :: message)) <- messages
+  tellMeTopic(bot.channelMessages).subscribe(bot.commands)
+  echo(bot.repliableMessages, "(yay!)").subscribe(bot.commands)
+  def echo(messages: Observable[(ReplyableContext, Message)], suffix: String) = for {
+    (ctx, PRIVMSG(_, _ :: message)) <- messages
   } yield {
     ctx.replyWithPrefix(s"${message.mkString(" ")} $suffix")
   }
 
-  def tellMeTopic(messages: Observable[(Context, Message)]) = for {
+  def tellMeTopic(messages: Observable[(InChannel, Message)]) = for {
     (ctx @ InChannel(_, _, channel, _), PRIVMSG(_, _ :: "!topic" :: Nil)) <- messages
   } yield ctx.replyWithPrefix(channel.topic.getOrElse("No topic set"))
 
-  def pong(messages: Observable[(ConnectionId, Message)]) = for {
-    (cid, PING(_, args)) <- messages
-  } yield SendMessage(cid, PONG(args: _*))
 }

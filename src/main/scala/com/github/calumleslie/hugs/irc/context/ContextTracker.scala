@@ -58,6 +58,6 @@ class ContextTracker {
   /** REQUIRES a well-behaved (synchronous) observable */
   def track(events: Observable[Event]) = for {
     event <- events.doOnEach(updateContext(_))
-  } yield (event, contextFor(event))
+  } yield (contextFor(event), event)
 
 }
