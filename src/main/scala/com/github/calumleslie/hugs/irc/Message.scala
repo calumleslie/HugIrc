@@ -24,7 +24,6 @@ case class Message (
       }
       builder ++= arg
     }
-    builder ++= "\r\n"
     builder.toString()
   }
 }

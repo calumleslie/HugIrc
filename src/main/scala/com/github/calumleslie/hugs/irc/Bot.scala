@@ -23,20 +23,19 @@ import com.typesafe.scalalogging.slf4j.Logging
 import io.netty.channel.ChannelInboundHandler
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.ChannelHandlerContext
-import rx.lang.scala.concurrency.Schedulers
 import com.github.calumleslie.hugs.irc.messages.NICK
 import com.github.calumleslie.hugs.irc.messages.USER
 import com.github.calumleslie.hugs.irc.messages.JOIN
+import rx.lang.scala.Subject
+import rx.lang.scala.schedulers.IOScheduler
+import rx.lang.scala.observables.ConnectableObservable
 
 class Bot extends Observer[Command] with Observable[Event] with Logging {
-  private val eventSubject = PublishSubject[Event]()
-  private val commandSubject = PublishSubject[Command]
+  private val eventSubject = Subject[Event]()
   private val bootstrap = new Bootstrap()
   private val parser = new Parser()
 
   private val connections = new concurrent.TrieMap[ConnectionId, Channel]()
-
-  subscribeOn(Schedulers.threadPoolForComputation)
 
   bootstrap.group(new NioEventLoopGroup).
     channel(classOf[NioSocketChannel]).
@@ -49,34 +48,32 @@ class Bot extends Observer[Command] with Observable[Event] with Logging {
       }
     })
 
-  def asJavaObservable = eventSubject.subscribeOn(Schedulers.threadPoolForComputation).asJavaObservable
-  def asJavaObserver = commandSubject.asJavaObserver
+  override val asJavaObservable = eventSubject.asJavaObservable
 
   val messages = for { MessageReceived(connectionId, message) <- this } yield (connectionId, message)
 
-  commandSubject.subscribe { command: Command =>
-    command match {
-      case Connect(id) => {
-        val channelFuture = bootstrap.connect(id.host, id.port)
+  override def onNext(command: Command) = command match {
+    case Connect(id) => {
+      val channelFuture = bootstrap.connect(id.host, id.port)
 
-        channelFuture.addListener(new ChannelFutureListener {
-          override def operationComplete(future: ChannelFuture) {
-            if (future.isSuccess) {
-              logger.debug(s"CONNECTED: $id")
-              connections(id) = future.channel()
-              future.channel().pipeline().addLast("Handler for $id", new Handler(id))
-            }
+      channelFuture.addListener(new ChannelFutureListener {
+        override def operationComplete(future: ChannelFuture) {
+          if (future.isSuccess) {
+            logger.debug(s"CONNECTED: $id")
+            connections(id) = future.channel()
+            future.channel().pipeline().addLast("Handler for $id", new Handler(id))
           }
-        })
-      }
-      case SendMessage(id, message) => {
-        connections.get(id) match {
-          case Some(channel) => {
-            logger.debug(s"$id > ${message.toLine}")
-            channel.writeAndFlush(message.toLine)
-          }
-          case None => logger.warn(s"Discarding $message because channel $id not known")
         }
+      })
+    }
+    case SendMessage(id, message) => {
+      connections.get(id) match {
+        case Some(channel) => {
+          logger.debug(s"$id > ${message.toLine}")
+          channel.write(message.toLine)
+          channel.writeAndFlush("\r\n")
+        }
+        case None => logger.warn(s"Discarding $message because channel $id not known")
       }
     }
   }
@@ -122,5 +119,7 @@ class Bot extends Observer[Command] with Observable[Event] with Logging {
         case _ => ()
       }
     }
+    
+    id
   }
 }
