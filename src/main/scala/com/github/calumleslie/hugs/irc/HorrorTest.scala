@@ -18,22 +18,7 @@ import rx.lang.scala.schedulers.IOScheduler
 import rx.lang.scala.Subject
 
 object HorrorTest extends App with Logging {
-  val bot = new Bot()
-
-  val what = Subject[Int]()
-
-  val x = new Observable[Int] {
-    override val asJavaObservable = what.asJavaObservable
-  }
-
-  val doubles = for (i <- x; if i > 5) yield i * 2
-
-  doubles.subscribe { i: Int =>
-    println(i)
-  }
-
-  what.onNext(4)
-  what.onNext(8)
+  val bot = new SimpleBot()
 
   val pongMessages = pong(bot.messages)
   pongMessages.subscribe(bot)
@@ -46,26 +31,22 @@ object HorrorTest extends App with Logging {
     (MessageReceived(_, message), context) <- contextEvents
   } yield (context, message)
 
-  val trackedMessages = trackedRaw.subscribeOn(IOScheduler())
+  val trackedMessages = trackedRaw.observeOn(IOScheduler())
 
   tellMeTopic(trackedMessages).subscribe(bot)
-  echo(trackedMessages, " (1)").subscribe(bot)
-  echo(trackedMessages, " (2)").subscribe(bot)
-  echo(trackedMessages, " (3)").subscribe(bot)
-  echo(trackedMessages, " (4)").subscribe(bot)
+  echo(trackedMessages, "(yay!)").subscribe(bot)
 
   val id = bot.maintainConnectionTo("localhost", 6667, Identity("hugbot"))
-  Thread.sleep(60000)
 
   def echo(messages: Observable[(Context, Message)], suffix: String) = for {
     (ReplyableContext(ctx), PRIVMSG(_, _ :: message)) <- messages
   } yield {
-    ctx.reply(s"${message.mkString(" ")} $suffix")
+    ctx.replyWithPrefix(s"${message.mkString(" ")} $suffix")
   }
 
   def tellMeTopic(messages: Observable[(Context, Message)]) = for {
-    (ctx @ InChannel(_, channel, _), PRIVMSG(_, _ :: "!topic" :: Nil)) <- messages
-  } yield ctx.reply(channel.topic.getOrElse("No topic set"))
+    (ctx @ InChannel(_, _, channel, _), PRIVMSG(_, _ :: "!topic" :: Nil)) <- messages
+  } yield ctx.replyWithPrefix(channel.topic.getOrElse("No topic set"))
 
   def pong(messages: Observable[(ConnectionId, Message)]) = for {
     (cid, PING(_, args)) <- messages

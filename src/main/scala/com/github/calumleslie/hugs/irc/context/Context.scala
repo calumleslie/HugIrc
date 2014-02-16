@@ -12,6 +12,8 @@ trait Context {
 }
 trait ReplyableContext extends Context {
   def reply(reply: String): Command
+  def replyWithPrefix(suffix: String) = reply(prefix + suffix)
+  def prefix: String
 }
 object ReplyableContext {
   def unapply(context: Context): Option[ReplyableContext] = context match {
@@ -19,10 +21,12 @@ object ReplyableContext {
     case _ => None
   }
 }
-case class InChannel(connectionId: ConnectionId, channel: ChannelContext, global: GlobalContext) extends ReplyableContext {
+case class InChannel(connectionId: ConnectionId, sender: String, channel: ChannelContext, global: GlobalContext) extends ReplyableContext {
   def reply(reply: String) = SendMessage(connectionId, PRIVMSG(channel.name, reply))
+  def prefix = s"$sender: "
 }
 case class InPrivateMessage(connectionId: ConnectionId, user: String, global: GlobalContext) extends ReplyableContext {
   def reply(reply: String) = SendMessage(connectionId, PRIVMSG(user, reply))
+  def prefix = ""
 }
 case class Other(connectionId: ConnectionId, global: GlobalContext) extends Context

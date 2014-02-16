@@ -6,8 +6,8 @@ case class Message (
     val target: Option[String],
     val command: String,
     val arguments: List[String]
-) {
-  def toLine: String = {
+) {  
+  lazy val toLine: String = {
     val builder = new StringBuilder()
     if( target.isDefined ) {
     	builder += ':'

@@ -35,9 +35,11 @@ class ContextTracker {
     case _ => Other(event.connectionId, connectionContexts(event.connectionId))
   }
 
+  def senderFromPrefix(prefix: String) = prefix.takeWhile(c => c != '!' && c != '@')
+
   def contextFor(connectionId: ConnectionId, message: Message, global: GlobalContext): Context = message match {
-    case PRIVMSG(_, Chan(channel) :: message :: Nil) => InChannel(connectionId, global.channels(channel), global)
-    case PRIVMSG(_, sender :: message :: Nil) => InPrivateMessage(connectionId, sender, global)
+    case PRIVMSG(Some(prefix), Chan(channel) :: message :: Nil) => InChannel(connectionId, senderFromPrefix(prefix), global.channels(channel), global)
+    case PRIVMSG(Some(prefix), _ :: message :: Nil) => InPrivateMessage(connectionId, senderFromPrefix(prefix), global)
     case _ => Other(connectionId, global)
   }
 
@@ -53,8 +55,9 @@ class ContextTracker {
     case _ => existing
   }
 
+  /** REQUIRES a well-behaved (synchronous) observable */
   def track(events: Observable[Event]) = for {
-    event <- events.synchronize.doOnEach(updateContext(_))
+    event <- events.doOnEach(updateContext(_))
   } yield (event, contextFor(event))
 
 }

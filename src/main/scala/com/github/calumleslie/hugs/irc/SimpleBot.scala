@@ -30,7 +30,7 @@ import rx.lang.scala.Subject
 import rx.lang.scala.schedulers.IOScheduler
 import rx.lang.scala.observables.ConnectableObservable
 
-class Bot extends Observer[Command] with Observable[Event] with Logging {
+class SimpleBot extends Observer[Command] with Observable[Event] with Logging {
   private val eventSubject = Subject[Event]()
   private val bootstrap = new Bootstrap()
   private val parser = new Parser()
@@ -70,8 +70,7 @@ class Bot extends Observer[Command] with Observable[Event] with Logging {
       connections.get(id) match {
         case Some(channel) => {
           logger.debug(s"$id > ${message.toLine}")
-          channel.write(message.toLine)
-          channel.writeAndFlush("\r\n")
+          channel.writeAndFlush(s"${message.toLine}\r\n")
         }
         case None => logger.warn(s"Discarding $message because channel $id not known")
       }
@@ -119,7 +118,7 @@ class Bot extends Observer[Command] with Observable[Event] with Logging {
         case _ => ()
       }
     }
-    
+
     id
   }
 }
