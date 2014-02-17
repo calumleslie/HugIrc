@@ -20,12 +20,12 @@ class Parser {
       case params ~ None => params
     } 
     
-    def trailing = " :" ~ """.*""".r ^^ { case _ ~ content => content }
+    def trailing = " :" ~> """.*""".r
     
-    def param = " " ~ """[^:][^ ]*""".r ^^ { case _ ~ param => param }
+    def param = " " ~> """[^:][^ ]*""".r 
     
     // Not as strict as spec (sensible?)
-    def prefix = ":" ~ """[^: ]+""".r ~ " " ^^ { case _ ~ prefix ~ _ => prefix }
+    def prefix = ":" ~> """[^: ]+""".r <~ " "
     
     def command = """[A-Za-z]+""".r | """[0-9]{3}""".r
 

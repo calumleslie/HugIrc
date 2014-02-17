@@ -26,8 +26,6 @@ class ParserSpec extends FunSpec with ShouldMatchers {
     it("should parse a full command with a remaining section") {
       parser.parse(":prefix PRIVMSG #somewhere :hello pop pickers: how are  things?") shouldBe
         Message(Some("prefix"), "PRIVMSG", List("#somewhere", "hello pop pickers: how are  things?"))
-
-      println(Message(Some("prefix"), "PRIVMSG", List("#somewhere", "hello pop pickers: how are  things?")).toLine)
     }
 
     it("should handle params with colons") {
