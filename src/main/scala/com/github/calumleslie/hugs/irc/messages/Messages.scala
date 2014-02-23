@@ -35,15 +35,6 @@ case object TOPIC extends MessageType {
   val command = "TOPIC"
 }
 
-case object TopicInformation {
-  def unapply(message: Message): Option[(String, Option[String])] = message match {
-    case TOPIC(_, channel :: topic :: Nil) => Some((channel, Some(topic)))
-    case Message(_, Responses.RPL_TOPIC, _ :: channel :: topic :: Nil) => Some((channel, Some(topic)))
-    case Message(_, Responses.RPL_NOTOPIC, _ :: channel :: _) => Some(channel, None)
-    case _ => None
-  }
-}
-
 case object Chan {
   def unapply(string: String): Option[String] = if (string.startsWith("#")) Some(string) else None
 }

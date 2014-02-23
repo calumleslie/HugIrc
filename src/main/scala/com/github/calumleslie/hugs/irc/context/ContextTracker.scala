@@ -14,8 +14,8 @@ import com.github.calumleslie.hugs.irc.messages.PRIVMSG
 import com.github.calumleslie.hugs.irc.messages.Chan
 import com.github.calumleslie.hugs.irc.messages.NAMES
 import com.github.calumleslie.hugs.irc.messages.TOPIC
-import com.github.calumleslie.hugs.irc.messages.TopicInformation
 import com.github.calumleslie.hugs.irc.MessageReceived
+import com.github.calumleslie.hugs.irc.matchers.TopicInformation
 
 class ContextTracker {
 
