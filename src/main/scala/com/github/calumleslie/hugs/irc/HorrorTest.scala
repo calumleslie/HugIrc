@@ -18,21 +18,14 @@ import rx.lang.scala.schedulers.IOScheduler
 import rx.lang.scala.Subject
 import com.github.calumleslie.hugs.irc.context.InChannel
 import com.github.calumleslie.hugs.irc.messages.JOIN
+import com.github.calumleslie.hugs.irc.stacks.StacksInstance
+import com.github.calumleslie.hugs.irc.stacks.HasEphemeralDictionary
 
 object HorrorTest extends App with Logging {
   val bot = Bot.connect("localhost", 6667, Identity("hugbot"))
   bot.stayJoinedTo("#hello")
-
-  tellMeTopic(bot.channelMessages).subscribe(bot.commands)
-  echo(bot.repliableMessages, "(yay!)").subscribe(bot.commands)
-  def echo(messages: Observable[(ReplyableContext, Message)], suffix: String) = for {
-    (ctx, PRIVMSG(_, _ :: message)) <- messages
-  } yield {
-    ctx.replyWithPrefix(s"${message.mkString(" ")} $suffix")
-  }
-
-  def tellMeTopic(messages: Observable[(InChannel, Message)]) = for {
-    (ctx @ InChannel(_, _, channel, _), PRIVMSG(_, _ :: "!topic" :: Nil)) <- messages
-  } yield ctx.replyWithPrefix(channel.topic.getOrElse("No topic set"))
+  
+  val stacks = new StacksInstance with HasEphemeralDictionary
+  stacks.attach(bot)
 
 }
